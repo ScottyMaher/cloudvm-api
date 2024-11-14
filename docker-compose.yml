@@ -1,0 +1,47 @@
+services:
+  nginx-certbot:
+    image: jonasal/nginx-certbot:5.4.0-nginx1.27.2
+    container_name: nginx-certbot
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      CERTBOT_EMAIL: ${CERTBOT_EMAIL}
+    volumes:
+      - ./nginx_secrets:/etc/letsencrypt
+      - ./user_conf.d:/etc/nginx/user_conf.d:ro
+    networks:
+      - app-network
+    depends_on:
+      - auth-service
+      - fastapi-app
+
+  fastapi-app:
+    image: ${FASTAPI_DOCKER_IMAGE}
+    container_name: fastapi-app
+    restart: unless-stopped
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - capabilities: [gpu]
+    ports:
+      - "127.0.0.1:5000:5000"
+    networks:
+      - app-network
+
+  auth-service:
+    build:
+      context: ./auth_service
+    container_name: auth-service
+    restart: unless-stopped
+    environment:
+      - API_KEY=${API_KEY}
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
+
