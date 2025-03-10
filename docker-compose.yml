@@ -21,11 +21,9 @@ services:
     image: ${FASTAPI_DOCKER_IMAGE}
     container_name: fastapi-app
     restart: unless-stopped
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - capabilities: [gpu]
+    runtime: nvidia
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
     ports:
       - "127.0.0.1:5000:5000"
     networks:
